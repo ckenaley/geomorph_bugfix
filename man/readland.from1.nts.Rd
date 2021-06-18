@@ -2,7 +2,7 @@
 % Please edit documentation in R/load.R
 \name{readland.from1.nts}
 \alias{readland.from1.nts}
-\title{Read single *.nts file containing landmark coordinates for a set of specimens, avoiding the bugs of \code{geomorph::readland.nts}}
+\title{Read single *.nts file containing landmark coordinates for a single specimen, avoiding the bugs of \code{geomorph::readland.nts}}
 \usage{
 readland.from1.nts(file)
 }
@@ -13,7 +13,7 @@ readland.from1.nts(file)
 Modified from \code{geomorph::readland.nts} . . . Function returns a 3D array (p x k x n=1), where p is the number of landmark points, k is the number of landmark dimensions (2 or 3), and n is the number of specimens (one in this limited case). The third dimension of this array contains a name for the specimen which is obtained from the names in the *.nts file.
 }
 \description{
-A function modified from \code{geomorph::readland.nts} to take a single .nts file and return and array that can be read by the \code{geomorph} package.
+A function modified from \code{geomorph::readland.nts} to take a single .nts file and return an array that can be read by the \code{geomorph} package.
 }
 \examples{
 

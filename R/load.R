@@ -1,4 +1,4 @@
-#' Read single *.nts file containing landmark coordinates for a set of specimens, avoiding the bugs of \code{geomorph::readland.nts}
+#' Read single *.nts file containing landmark coordinates for a single specimen, avoiding the bugs of \code{geomorph::readland.nts}
 #'
 #' A function modified from \code{geomorph::readland.nts} to take a single .nts file and return an array that can be read by the \code{geomorph} package.
 #' 

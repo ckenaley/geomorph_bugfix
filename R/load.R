@@ -1,6 +1,6 @@
-#' Read single *.nts file containing landmark coordinates for a single specimen, avoiding the bugs of \code{geomorph::readland.nts}
+#' @title Read single *.nts file containing landmark coordinates for a single specimen, avoiding the bugs of \code{geomorph::readland.nts}
 #'
-#' A function modified from \code{geomorph::readland.nts} to take a single .nts file and return an array that can be read by the \code{geomorph} package.
+#' @description A function modified from \code{geomorph::readland.nts} to take a single .nts file and return an array that can be read by the \code{geomorph} package.
 #' 
 #' @param file Path to the input file
 #' @return Modified from \code{geomorph::readland.nts} . . . Function returns a 3D array (p x k x n=1), where p is the number of landmark points, k is the number of landmark dimensions (2 or 3), and n is the number of specimens (one in this limited case). The third dimension of this array contains a name for the specimen which is obtained from the names in the *.nts file.
@@ -92,3 +92,57 @@ readland.from1.nts <- function(file){
   }
   return(coords)
 }
+
+#' @title  Read multiple nts files.
+#' 
+#' @description  Read multiple nts (or .dta) files that reflect one specimen to obtain landmark coordinates and combine them into a single array. Avoiding the bugs of \code{geomorph::readland.nts}, about which \code{geomorph::readlmulti.nts} is wrapped
+
+#' @param filelist A vector containing the file paths to all the .nts files to be compiled
+#' 
+#' @details This is a wrapper of \link{readland.from1.nts} to allow reading landmark coordinates, in 2D or 3D, from several nts (or .dta) files each containing one specimen, and compiling them into an array for proceeding with \code{geomorph} procedures.
+#' 
+#' @return Modified from \code{geomorph::readmulit.nts} . . . Function returns a 3D array (p x k x n), where p is the number of landmark points, k is the number of landmark dimensions (2 or 3), and n is the number of specimens. The third dimension of this array contains names for each specimen, which are retrieved from the nts specimen labels, if those are available. 
+#'
+#' @seealso \code{geomorph::readmulti.nts} 
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' library(geomorph)
+#' #load a two nts files
+#' 
+#' file1 <- system.file("extdata","echiostoma.nts",package = "geomorphcompanion")
+#' file2 <- system.file("extdata","echiostoma2.nts",package = "geomorphcompanion")
+#' files <- c(file1,file2)
+#' nts.file <- readmulti.from1.nts(filelist=files)
+#' print(nts.file)
+#' 
+readmulti.from1.nts <- function (filelist) 
+{
+  nts.list <- filelist
+  file.ext <- substr(nts.list, nchar(nts.list) - 3, nchar(nts.list))
+  if (!all(file.ext %in% c(".nts", ".NTS", ".dta", ".DTA"))) 
+    stop("File list includes files in a format other than nts or dta, please ammend")
+  dt.dims <- sapply(1:length(nts.list), function(x) 
+    dim(readland.from1.nts(nts.list[x])),simplify = TRUE)
+  p1 <- dt.dims[1, 1]
+  k1 <- dt.dims[2, 1]
+  n1 <- dt.dims[3, 1]
+  if (any(dt.dims[1, ] != p1)) 
+    stop("Input tps files include different numbers of landmarks, please correct")
+  if (any(dt.dims[2, ] != k1)) 
+    stop("Input tps files include landmarks in different dimensions (2D and 3D), please correct")
+  all.lms <-list()   #use a list instead of array
+  for (f in 1:length(nts.list)) {
+    all.lms[[f]] <- readland.from1.nts(nts.list[f])
+  }
+
+  all.lms <- do.call(rbind,all.lms)
+  all.lms <- geomorph::arrayspecs(all.lms, p1, k1)
+  dimnames(all.lms)[[3]] <- basename(nts.list)
+  
+  return(all.lms)
+}
+
+

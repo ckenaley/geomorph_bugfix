@@ -1,0 +1,16 @@
+Package: geomorphcompanion
+Title: What the Package Does (One Line, Title Case)
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Christopher",
+           family = "Kenaley",
+           role = c("aut", "cre"),
+           email = "cpkeanely@gmail.com")
+Description: A companion to the geomorph package
+License: `use_mit_license()`
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
+Imports:
+	geomorph (>= 4.0)

@@ -6,6 +6,7 @@
 #' @return Modified from \link{\code{readland.nts}} . . . Function returns a 3D array (p x k x n=1), where p is the number of landmark points, k is the number of landmark dimensions (2 or 3), and n is the number of specimens (one in this limited case). The third dimension of this array contains a name for the specimen which is obtained from the names in the *.nts file.
 #' 
 #' @seealso \code{readland.nts}
+#' 
 #' @export
 #' 
 #' @examples	

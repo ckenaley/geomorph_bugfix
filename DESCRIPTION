@@ -1,5 +1,5 @@
 Package: geomorphcompanion
-Title: What the Package Does (One Line, Title Case)
+Title: This package prvide help with the geomorph package
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "Christopher",
@@ -7,7 +7,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "cpkeanely@gmail.com")
 Description: A companion to the geomorph package
-License: `use_mit_license()`
+License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)

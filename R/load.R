@@ -1,17 +1,17 @@
-#' Read single *.nts file containing landmark coordinates for a set of specimens, avoiding the bugs of \linl{\code{readland.nts}}
+#' Read single *.nts file containing landmark coordinates for a set of specimens, avoiding the bugs of \code{geomorph::readland.nts}
 #'
-#' A function modified from \link{\code{readland.nts}} to take a single .nts file and return and array that can be read by the \link{\code{geomorph}} package.
+#' A function modified from \code{geomorph::readland.nts} to take a single .nts file and return an array that can be read by the \code{geomorph} package.
 #' 
-#' @param infile Path to the input file
-#' @return Modified from \link{\code{readland.nts}} . . . Function returns a 3D array (p x k x n=1), where p is the number of landmark points, k is the number of landmark dimensions (2 or 3), and n is the number of specimens (one in this limited case). The third dimension of this array contains a name for the specimen which is obtained from the names in the *.nts file.
+#' @param file Path to the input file
+#' @return Modified from \code{geomorph::readland.nts} . . . Function returns a 3D array (p x k x n=1), where p is the number of landmark points, k is the number of landmark dimensions (2 or 3), and n is the number of specimens (one in this limited case). The third dimension of this array contains a name for the specimen which is obtained from the names in the *.nts file.
 #' 
-#' @seealso \code{readland.nts}
+#' @seealso \code{geomorph::readland.nts}
 #' 
 #' @export
 #' 
 #' @examples	
 #' 
-#' #load an nts file
+#' #load a single nts file
 #' 
 #' file <- system.file("extdata", "echiostoma.nts", package = "geomorphcompanion")
 #' nts.file <- readland.from1.nts(file=file)

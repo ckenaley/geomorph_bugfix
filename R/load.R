@@ -1,6 +1,6 @@
-#' @title Read single *.nts file containing landmark coordinates for a single specimen, avoiding the bugs of \code{geomorph::readland.nts}
+#' @title Read single *.nts file containing landmark
 #'
-#' @description A function modified from \code{geomorph::readland.nts} to take a single .nts file and return an array that can be read by the \code{geomorph} package.
+#' @description A function modified from \code{geomorph::readland.nts} to take a single .nts file and return an array that can be read by the \code{geomorph} package. Avoids the bugs of \code{geomorph::readland.nts}
 #' 
 #' @param file Path to the input file
 #' @return Modified from \code{geomorph::readland.nts} . . . Function returns a 3D array (p x k x n=1), where p is the number of landmark points, k is the number of landmark dimensions (2 or 3), and n is the number of specimens (one in this limited case). The third dimension of this array contains a name for the specimen which is obtained from the names in the *.nts file.
@@ -99,7 +99,7 @@ readland.from1.nts <- function(file){
 
 #' @param filelist A vector containing the file paths to all the .nts files to be compiled
 #' 
-#' @details This is a wrapper of \link{readland.from1.nts} to allow reading landmark coordinates, in 2D or 3D, from several nts (or .dta) files each containing one specimen, and compiling them into an array for proceeding with \code{geomorph} procedures.
+#' @details This is a wrapper of \link{readland.from1.nts} to allow reading of landmark coordinates, in 2D or 3D, from several .nts (or .dta) files each containing one specimen, and compiling them into an array for proceeding with \code{geomorph} procedures.
 #' 
 #' @return Modified from \code{geomorph::readmulit.nts} . . . Function returns a 3D array (p x k x n), where p is the number of landmark points, k is the number of landmark dimensions (2 or 3), and n is the number of specimens. The third dimension of this array contains names for each specimen, which are retrieved from the nts specimen labels, if those are available. 
 #'
@@ -118,6 +118,9 @@ readland.from1.nts <- function(file){
 #' nts.file <- readmulti.from1.nts(filelist=files)
 #' print(nts.file)
 #' 
+#' #perform GPA and plot
+#' gpa <- gpagen(nts.file)
+#' plot(gpa)
 readmulti.from1.nts <- function (filelist) 
 {
   nts.list <- filelist

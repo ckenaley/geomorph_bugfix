@@ -16,7 +16,7 @@ Modified from \code{geomorph::readmulit.nts} . . . Function returns a 3D array (
 Read multiple nts (or .dta) files that reflect one specimen to obtain landmark coordinates and combine them into a single array. Avoiding the bugs of \code{geomorph::readland.nts}, about which \code{geomorph::readlmulti.nts} is wrapped
 }
 \details{
-This is a wrapper of \link{readland.from1.nts} to allow reading landmark coordinates, in 2D or 3D, from several nts (or .dta) files each containing one specimen, and compiling them into an array for proceeding with \code{geomorph} procedures.
+This is a wrapper of \link{readland.from1.nts} to allow reading of landmark coordinates, in 2D or 3D, from several .nts (or .dta) files each containing one specimen, and compiling them into an array for proceeding with \code{geomorph} procedures.
 }
 \examples{
 
@@ -29,6 +29,9 @@ files <- c(file1,file2)
 nts.file <- readmulti.from1.nts(filelist=files)
 print(nts.file)
 
+#perform GPA and plot
+gpa <- gpagen(nts.file)
+plot(gpa)
 }
 \seealso{
 \code{geomorph::readmulti.nts}

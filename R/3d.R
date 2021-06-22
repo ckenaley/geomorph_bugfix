@@ -7,6 +7,7 @@
 #' @param file character, a path to an ASCII .ply file
 #' @param ShowSpecimen logical,should the ply file should be displayed
 #'
+#'
 #' @details Function reads three-dimensional surface data in the form of a single .ply file (Polygon File Format; ASCII format only, from 3D scanners or from .ply rendered from STL files produced by surface renderings of computed tomography data. The function opens the ply file and plots the mesh in a local  \code{shiny} app if \code{ShowSpecimen=TRUE}.
 #'
 #' @return
@@ -15,7 +16,7 @@
 #'
 #' #' \itemize{
 #' \item "x","y", and "z", the x, y, and z coordinats of the mesh vertices
-#' \item "meas", \code{mesh3d} object whose name describes the number of vertices and triangles.
+#' \item "mesh", \code{mesh3d} object whose name describes the number of vertices and triangles.
 #' \item "zmean", the mean z position for each triangle (used for face coloring)
 #' \item "facecolor", a face color according to \code{colour_ramp} palette "RdBu"
 #' }
@@ -113,62 +114,134 @@ read.ply2 <- function(file,ShowSpecimen = FALSE) {
 #' read_csv(f)
 #'}
 
+library(htmlwidgets)
 digit.fixed2 <- function(spec = spec,out.dir=NULL) {
+
+  js <- "function(el, x, inputName){
+  var id = el.getAttribute('id');
+  var d3 = Plotly.d3;
+  $(document).on('shiny:inputchanged', function(event) {
+    if (event.name === 'del') {
+      var out = [];
+      d3.select('#' + id + ' g.legend').selectAll('.traces').each(function(){
+        var trace = d3.select(this)[0][0].__data__[0].trace;
+        out.push([name=trace.name, index=trace.index]);
+      });
+      Shiny.setInputValue(inputName, out);
+    }
+  });
+}"
+
   ui <- fluidPage(
     plotlyOutput('myPlot'),
-    tableOutput("table"),
+    verbatimTextOutput("PrintTraceMapping"),
     verbatimTextOutput("info"),
-    actionButton("save", "Save")
+    actionButton("save", "Save"),
+    actionButton("del", "Delete Last"),
+    tags$script(HTML("$(function(){
+      $(document).keyup(function(e) {
+      if (e.which == 65) {
+        $('#button').click()
+      }
+      });
+      })")),
+    actionButton("button", "Accept Point"),
+    textOutput("text")
+
+
   )
 
   server <- function(input, output, session) {
     # keep track of which cars have been hovered on
-    dt <- reactiveVal()
-
-    # On hover, the key field of the event data contains the car name
-    # Add that name to the set of all "selected" cars
+    dt <- reactiveValues(df=tibble(NULL))
 
 
-    observeEvent(event_data("plotly_click"), {
-      d <- unlist(event_data("plotly_click")[, c(3:5)])
-      d_old_new <- rbind(dt(), d)
-      dt(unique(d_old_new))
-    })
+    observeEvent(input$button, {
 
+      d <- unlist(event_data("plotly_click",source = "A"))
+      d_old_new <- rbind(dt$df, d)
+      dt$df <- d_old_new
+      colnames(dt$df) <- c("pt","curve","x","y","z")
+
+      dt$df <- dt$df%>%filter(pt==0)
+      }
+      )
+
+    output$text <- renderText({paste0("N pts = ", nrow(dt$df))})
 
     # clear the set of data when a double-click occurs
-    observeEvent(event_data("plotly_doubleclick"), {
-      dt(NULL)
-    })
 
 
     # if the point is selected, paint it red
     #cols <- ifelse(row.names(mtcars) %in% data(), "red", "black")
+
 
     output$myPlot = renderPlotly({
       plot_ly(
         x = spec$x,
         y = spec$y,
         z = spec$z,
-        i = spec$mesh$it[1, ] - 1,
-        j = spec$mesh$it[2, ] - 1,
-        k = spec$mesh$it[3, ] - 1,
-        facecolor = spec$facecolor,
-        type = "mesh3d",
-        alpha = 0.01,
-      )
+        type = "scatter3d",
+        alpha = 1,size=0.1,
+        mode = 'markers',
+        source = "A"
+      )%>%add_trace(type = 'mesh3d',
+                    x = spec$x,
+                    y = spec$y,
+                    z = spec$z,
+                    i = spec$mesh$it[1, ] - 1,
+                    j = spec$mesh$it[2, ] - 1,
+                    k = spec$mesh$it[3, ] - 1,
+                    facecolor = spec$facecolor,
+                    inherit = FALSE)
     })
 
 
-    # output$table <- renderTable({data()
-    # })
+
+
+
+    observeEvent(input$button, {
+
+
+      plotlyProxy("myPlot") %>%
+
+        plotlyProxyInvoke("addTraces", list(
+          x=c(dt$df[nrow(dt$df),3], Inf),
+          y=c(dt$df[nrow(dt$df),4], Inf),
+          z=c(dt$df[nrow(dt$df),5], Inf),
+                                            type = 'scatter3d',
+                                            mode = 'markers',
+          color=I("black"),
+          name=paste0("point ",nrow(dt$df)),
+          inherit=FALSE))%>% onRender(js, data = "TraceMapping")
+
+    })
+
+    observeEvent(input$del, {
+      if(nrow(dt$df)>0) plotlyProxy("myPlot") %>%
+        plotlyProxyInvoke("deleteTraces", as.integer(nrow(dt$df)+1))
+      #if(nrow(dt$df)>0) dt$df <-  dt$df[-nrow(dt$df),]
+
+    })
+
+    observeEvent(input$del, {
+     # if(nrow(dt$df)>0) plotlyProxy("myPlot") %>%
+        #plotlyProxyInvoke("deleteTraces", as.integer(nrow(dt$df)+1))
+      if(nrow(dt$df)!=0) dt$df <-  dt$df[-nrow(dt$df),]
+    })
+
+
+
 
     output$info <- renderPrint({
-      dt()
+      if(nrow(dt$df>0)) dt$df#%>%select(x,y,z)
     })
 
+
+
+
     observeEvent(input$save, {
-      write.csv(dt(), paste0(out.dir,"/",spec$spec.name,".csv"), row.names = FALSE)
+      write.csv(dt$df, paste0(out.dir,"/",spec$spec.name,".csv"), row.names = FALSE)
     })
 
   }

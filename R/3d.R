@@ -96,7 +96,7 @@ read.ply2 <- function(file,ShowSpecimen = FALSE) {
 #' @seealso \code{geomorph::digitize.fixed}
 #'
 #' @export
-#'
+#' @import shiny tidyverse plotly utils
 #' @examples
 #'
 #'\dontrun{
@@ -114,27 +114,10 @@ read.ply2 <- function(file,ShowSpecimen = FALSE) {
 #' read_csv(f)
 #'}
 
-library(htmlwidgets)
+
 digit.fixed2 <- function(spec = spec,out.dir=NULL) {
-
-  js <- "function(el, x, inputName){
-  var id = el.getAttribute('id');
-  var d3 = Plotly.d3;
-  $(document).on('shiny:inputchanged', function(event) {
-    if (event.name === 'del') {
-      var out = [];
-      d3.select('#' + id + ' g.legend').selectAll('.traces').each(function(){
-        var trace = d3.select(this)[0][0].__data__[0].trace;
-        out.push([name=trace.name, index=trace.index]);
-      });
-      Shiny.setInputValue(inputName, out);
-    }
-  });
-}"
-
   ui <- fluidPage(
     plotlyOutput('myPlot'),
-    verbatimTextOutput("PrintTraceMapping"),
     verbatimTextOutput("info"),
     actionButton("save", "Save"),
     actionButton("del", "Delete Last"),
@@ -154,27 +137,6 @@ digit.fixed2 <- function(spec = spec,out.dir=NULL) {
   server <- function(input, output, session) {
     # keep track of which cars have been hovered on
     dt <- reactiveValues(df=tibble(NULL))
-
-
-    observeEvent(input$button, {
-
-      d <- unlist(event_data("plotly_click",source = "A"))
-      d_old_new <- rbind(dt$df, d)
-      dt$df <- d_old_new
-      colnames(dt$df) <- c("pt","curve","x","y","z")
-
-      dt$df <- dt$df%>%filter(pt==0)
-      }
-      )
-
-    output$text <- renderText({paste0("N pts = ", nrow(dt$df))})
-
-    # clear the set of data when a double-click occurs
-
-
-    # if the point is selected, paint it red
-    #cols <- ifelse(row.names(mtcars) %in% data(), "red", "black")
-
 
     output$myPlot = renderPlotly({
       plot_ly(
@@ -196,26 +158,36 @@ digit.fixed2 <- function(spec = spec,out.dir=NULL) {
                     inherit = FALSE)
     })
 
-
-
-
-
     observeEvent(input$button, {
 
+      d <- unlist(event_data("plotly_click",source = "A",priority="input"))
+      d_old_new <- rbind(dt$df, d)
+      dt$df <- d_old_new
+      colnames(dt$df) <- c("pt","curve","x","y","z")
 
-      plotlyProxy("myPlot") %>%
+      dt$df <- dt$df%>%filter(pt==0)
 
+     plotlyProxy("myPlot") %>%
         plotlyProxyInvoke("addTraces", list(
           x=c(dt$df[nrow(dt$df),3], Inf),
           y=c(dt$df[nrow(dt$df),4], Inf),
           z=c(dt$df[nrow(dt$df),5], Inf),
-                                            type = 'scatter3d',
-                                            mode = 'markers',
+          type = 'scatter3d',
+          mode = 'markers',
           color=I("black"),
           name=paste0("point ",nrow(dt$df)),
-          inherit=FALSE))%>% onRender(js, data = "TraceMapping")
+          inherit=FALSE))
 
-    })
+})
+    output$text <- renderText({paste0("N pts = ", nrow(dt$df))})
+
+    # clear the set of data when a double-click occurs
+
+
+    # if the point is selected, paint it red
+    #cols <- ifelse(row.names(mtcars) %in% data(), "red", "black")
+
+
 
     observeEvent(input$del, {
       if(nrow(dt$df)>0) plotlyProxy("myPlot") %>%
@@ -236,8 +208,6 @@ digit.fixed2 <- function(spec = spec,out.dir=NULL) {
     output$info <- renderPrint({
       if(nrow(dt$df>0)) dt$df#%>%select(x,y,z)
     })
-
-
 
 
     observeEvent(input$save, {

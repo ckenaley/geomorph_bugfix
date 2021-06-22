@@ -16,7 +16,7 @@ A list with the following components:
 
 #' \itemize{
 \item "x","y", and "z", the x, y, and z coordinats of the mesh vertices
-\item "meas", \code{mesh3d} object whose name describes the number of vertices and triangles.
+\item "mesh", \code{mesh3d} object whose name describes the number of vertices and triangles.
 \item "zmean", the mean z position for each triangle (used for face coloring)
 \item "facecolor", a face color according to \code{colour_ramp} palette "RdBu"
 }

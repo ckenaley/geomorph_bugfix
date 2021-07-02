@@ -104,7 +104,7 @@ read.ply2 <- function(file,ShowSpecimen = FALSE) {
 #'
 #'ply.f<- system.file("extdata","hammerhead.ply",package = "geomorphcompanion")
 #'
-#'spec <- read.ply2(ply=ply.f,ShowSpecimen = F)
+#'spec <- read.ply2(file=ply.f,ShowSpecimen = F)
 #'
 #'digit.fixed2(spec=spec,out.dir = tempdir())
 #'
@@ -114,109 +114,165 @@ read.ply2 <- function(file,ShowSpecimen = FALSE) {
 #' read_csv(f)
 #'}
 
-
 digit.fixed2 <- function(spec = spec,out.dir=NULL) {
   ui <- fluidPage(
+    sliderInput("marksize", "Point size:",
+                min = 1, max = 50,
+                value = 10),
     plotlyOutput('myPlot'),
     verbatimTextOutput("info"),
     actionButton("save", "Save"),
     actionButton("del", "Delete Last"),
-    tags$script(HTML("$(function(){
+    tags$script(
+      HTML(
+        "$(function(){
       $(document).keyup(function(e) {
       if (e.which == 65) {
         $('#button').click()
       }
       });
-      })")),
+      })"
+      )
+    ),
     actionButton("button", "Accept Point"),
     textOutput("text")
-
-
   )
 
   server <- function(input, output, session) {
-    # keep track of which cars have been hovered on
-    dt <- reactiveValues(df=tibble(NULL))
+
+    dt <- reactiveValues(df = tibble(NULL), df2 = tibble(NULL))
+
+
 
     output$myPlot = renderPlotly({
-      plot_ly(
+
+
+      plot_ly(type = 'scatter3d', mode = 'markers')%>%
+        add_trace(
         x = spec$x,
         y = spec$y,
         z = spec$z,
-        type = "scatter3d",
-        alpha = 1,size=0.1,
-        mode = 'markers',
-        source = "A"
-      )%>%add_trace(type = 'mesh3d',
-                    x = spec$x,
-                    y = spec$y,
-                    z = spec$z,
-                    i = spec$mesh$it[1, ] - 1,
-                    j = spec$mesh$it[2, ] - 1,
-                    k = spec$mesh$it[3, ] - 1,
-                    facecolor = spec$facecolor,
-                    inherit = FALSE)
+        marker=list(
+        alpha = 1,
+        size = 10,
+        color="black"),
+        name="points"
+      ) %>% add_trace(
+        type = 'mesh3d',
+        x = spec$x,
+        y = spec$y,
+        z = spec$z,
+        i = spec$mesh$it[1,] - 1,
+        j = spec$mesh$it[2,] - 1,
+        k = spec$mesh$it[3,] - 1,
+        facecolor = "gray20",
+        opacity=0.3,
+        inherit = FALSE,
+        name="mesh"
+      )%>%
+        layout(showlegend = FALSE,
+               updatemenus = list(
+          list(type='buttons',
+               direction = "right",
+               xanchor = 'center',
+               yanchor = "top",
+               x = 0.5,
+               y = 1.27,
+               buttons = list(
+                 list(method = "update",
+                      args = list(list(visible=c(T, T))),
+                      label = 'points+mesh'),
+                 list(method = "update",
+                      args = list(list(visible=c(F, T))),
+                      label = 'points'),
+                 list(method = "update",
+                      args = list(list(visible=c(T,F))),
+                      label = 'mesh')
+               )))
+        )
     })
+
+
+
+
+    observeEvent(input$marksize, {
+      plotlyProxy("myPlot") %>%
+        plotlyProxyInvoke(
+          "restyle",
+          list(
+            marker=list(size=input$marksize,color="black",name="points"),
+            inherit=TRUE
+            )
+
+
+        )
+
+
+      }
+        )
+
 
     observeEvent(input$button, {
-
-      d <- unlist(event_data("plotly_click",source = "A",priority="input"))
+      d <-
+        unlist(event_data("plotly_click", priority = "event"))
       d_old_new <- rbind(dt$df, d)
       dt$df <- d_old_new
-      colnames(dt$df) <- c("pt","curve","x","y","z")
+      colnames(dt$df) <- c("pt", "curve", "x", "y", "z")
 
-      dt$df <- dt$df%>%filter(pt==0)
+      dt$df <- dt$df#%>%filter(pt==0)
 
-     plotlyProxy("myPlot") %>%
-        plotlyProxyInvoke("addTraces", list(
-          x=c(dt$df[nrow(dt$df),3], Inf),
-          y=c(dt$df[nrow(dt$df),4], Inf),
-          z=c(dt$df[nrow(dt$df),5], Inf),
-          type = 'scatter3d',
-          mode = 'markers',
-          color=I("black"),
-          name=paste0("point ",nrow(dt$df)),
-          inherit=FALSE))
+      dt$df2 <- dt$df %>% filter(pt == 1)
 
-})
-    output$text <- renderText({paste0("N pts = ", nrow(dt$df))})
-
-    # clear the set of data when a double-click occurs
-
-
-    # if the point is selected, paint it red
-    #cols <- ifelse(row.names(mtcars) %in% data(), "red", "black")
+      if (last(dt$df$pt) == 1)
+        plotlyProxy("myPlot") %>%
+        plotlyProxyInvoke(
+          "addTraces",
+          list(
+            x = c(dt$df[nrow(dt$df), 3], Inf),
+            y = c(dt$df[nrow(dt$df), 4], Inf),
+            z = c(dt$df[nrow(dt$df), 5], Inf),
+            type = 'scatter3d',
+            mode = 'markers',
+            marker=list(color="blue",size=input$marksize+10),
+            name = paste0("point ", nrow(dt$df)),
+            inherit = FALSE
+          )
+        )
 
 
-
-    observeEvent(input$del, {
-      if(nrow(dt$df)>0) plotlyProxy("myPlot") %>%
-        plotlyProxyInvoke("deleteTraces", as.integer(nrow(dt$df)+1))
-      #if(nrow(dt$df)>0) dt$df <-  dt$df[-nrow(dt$df),]
 
     })
-
-    observeEvent(input$del, {
-     # if(nrow(dt$df)>0) plotlyProxy("myPlot") %>%
-        #plotlyProxyInvoke("deleteTraces", as.integer(nrow(dt$df)+1))
-      if(nrow(dt$df)!=0) dt$df <-  dt$df[-nrow(dt$df),]
+    output$text <- renderText({
+      if(nrow(dt$df)>0){
+      paste0("N pts = ", nrow(dt$df%>% filter(pt == 1)))}else{"N pts = 0"}
     })
 
 
+    observeEvent(input$del, {
+      if (nrow(dt$df) > 0)
+        plotlyProxy("myPlot") %>%
+        plotlyProxyInvoke("deleteTraces", as.integer(nrow(dt$df2[dt$df2$pt ==1, ]) + 2))
+
+      if (nrow(dt$df) != 0)
+        dt$df <-  dt$df[-nrow(dt$df), ] %>% filter(pt == 1)
+      if (nrow(dt$df) != 0)
+        dt$df2 <-  dt$df[-nrow(dt$df2), ]
+    })
 
 
     output$info <- renderPrint({
-      if(nrow(dt$df>0)) dt$df#%>%select(x,y,z)
+      if (nrow(dt$df) != 0)
+        dt$df %>% filter(pt == 1)%>%select(x,y,z)
     })
 
 
     observeEvent(input$save, {
-      write.csv(dt$df, paste0(out.dir,"/",spec$spec.name,".csv"), row.names = FALSE)
+      write.csv(dt$df%>% filter(pt == 1)%>%select(x,y,z),
+                paste0(out.dir, "/", spec$spec.name, ".csv"),
+                row.names = FALSE)
     })
 
   }
 
   shinyApp(ui, server)
 }
-
-

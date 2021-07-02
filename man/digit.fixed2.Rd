@@ -27,7 +27,7 @@ Function for digitizing fixed three-dimensional landmarks. Produces a \code{shin
 
 ply.f<- system.file("extdata","hammerhead.ply",package = "geomorphcompanion")
 
-spec <- read.ply2(ply=ply.f,ShowSpecimen = F)
+spec <- read.ply2(file=ply.f,ShowSpecimen = F)
 
 digit.fixed2(spec=spec,out.dir = tempdir())
 
